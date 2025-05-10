@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,11 +12,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $dishes = \App\Models\Dish::factory(30)->create();
+        $drinks = \App\Models\Drink::factory(20)->create();
+        $menus = \App\Models\Menu::factory(7)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $menus->each(function ($menu) use ($dishes) {
+            $menu->dishes()->attach($dishes->random(16));
+        });
+
+        // Tạo orders có dishes và drinks
+        \App\Models\Order::factory(5)->create()->each(function ($order) use ($dishes, $drinks) {
+            $order->dishes()->attach($dishes->random(6));
+
+            $order->drinks()->attach($drinks->random(2), [
+                'quantity' => rand(1, 2),
+                'price' => fake()->randomFloat(2, 5, 50),
+            ]);
+        });
     }
 }
