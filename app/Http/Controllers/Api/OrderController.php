@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Traits\TelegramHelperTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Properties\ParseMode;
 
@@ -47,9 +48,9 @@ class OrderController extends Controller
 
         $dishNames = $order->dishes->pluck('name')->toArray();
         $message = "*\\[Đơn hàng mới\\]*\n"
-            .'*Tên:* '.$this->escapeMarkdownV2($order->name)."\n"
-            .'*SĐT:* '.$this->escapeMarkdownV2($order->phone)."\n"
-            .'*Địa chỉ:* '.$this->escapeMarkdownV2($order->address)."\n"
+            .'*Tên:* `'.$this->escapeMarkdownV2($order->name)."`\n"
+            .'*SĐT:* `'.$this->escapeMarkdownV2($order->phone)."`\n"
+            .'*Địa chỉ:* `'.$this->escapeMarkdownV2($order->address)."`\n"
             .'*Ghi chú:* '.($order->note ? $this->escapeMarkdownV2($order->note) : '_Không có_')."\n"
             ."*Món đã đặt:*\n"
             .implode("\n", array_map(fn ($i, $name) => ($i + 1).'\\. '.$name, array_keys($dishNames), $dishNames))."\n"
@@ -62,7 +63,7 @@ class OrderController extends Controller
         );
 
         return response()->json([
-            'status' => 'success',
+            'success' => true,
             'message' => 'Đơn hàng đã được gửi thành công',
             'orderId' => $order->id,
         ], 200);
@@ -73,7 +74,27 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        return 'ok';
+        $order = Cache::remember("xan.api.order.{$id}", now()->addMinutes(10), function () use ($id) {
+            $order = Order::find($id);
+
+            if ($order) {
+                $order->load('dishes');
+            }
+
+            return $order;
+        });
+
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đơn hàng không tồn tại',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+        ], 200);
     }
 
     /**

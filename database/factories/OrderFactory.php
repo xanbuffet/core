@@ -22,7 +22,7 @@ class OrderFactory extends Factory
             'address' => $this->faker->address(),
             'note' => $this->faker->optional()->sentence(),
             'total' => $this->faker->randomFloat(2, 35, 1000),
-            'status' => $this->faker->randomElement(['pending', 'completed', 'canceled']),
+            'status' => $this->faker->randomElement(['pending', 'confirmed', 'delivering', 'delivered', 'completed', 'canceled']),
         ];
     }
 }

@@ -40,7 +40,10 @@ class OrderResource extends Resource
                 Forms\Components\Select::make('status')
                     ->label('Trạng thái')
                     ->options([
-                        'pending' => 'Đang xử lý',
+                        'pending' => 'Chờ xác nhận',
+                        'confirmed' => 'Đã xác nhận',
+                        'delivering' => 'Đang giao hàng',
+                        'delivered' => 'Đã giao hàng',
                         'completed' => 'Hoàn thành',
                         'canceled' => 'Đã hủy',
                     ])
@@ -76,13 +79,19 @@ class OrderResource extends Resource
                     ->label('Trạng thái')
                     ->badge()
                     ->formatStateUsing(fn ($state) => match ($state) {
-                        'pending' => 'Đang xử lý',
-                        'completed' => 'Hoàn tất',
+                        'pending' => 'Chờ xác nhận',
+                        'confirmed' => 'Đã xác nhận',
+                        'delivering' => 'Đang giao hàng',
+                        'delivered' => 'Đã giao hàng',
+                        'completed' => 'Hoàn thành',
                         'canceled' => 'Đã hủy',
                         default => ucfirst($state),
                     })
                     ->color(fn ($state) => match ($state) {
                         'pending' => 'warning',
+                        'confirmed' => 'success',
+                        'delivering' => 'info',
+                        'delivered' => 'success',
                         'completed' => 'success',
                         'canceled' => 'danger',
                         default => 'gray',
