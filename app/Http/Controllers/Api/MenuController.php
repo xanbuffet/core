@@ -15,7 +15,7 @@ class MenuController extends Controller
     public function index()
     {
         try {
-            $cache_key = 'xan.menu.all';
+            $cache_key = 'xan.api.menu.all';
             $menus = Cache::remember($cache_key, now()->addHours(8), function () {
                 return Menu::with('dishes')->get();
             });
@@ -63,7 +63,7 @@ class MenuController extends Controller
             ], 400);
         }
 
-        $cache_key = 'xan.menu.'.$dayOfWeek;
+        $cache_key = 'xan.api.menu.'.$dayOfWeek;
         $menu = Cache::remember($cache_key, now()->addHours(8), function () use ($dayOfWeek) {
             return Menu::with('dishes')->where('day_of_week', $dayOfWeek)->first();
         });
