@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Dish;
 use App\Models\Order;
 use App\Traits\TelegramHelperTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Properties\ParseMode;
 
@@ -35,38 +37,63 @@ class OrderController extends Controller
      */
     public function store(Request $request, Nutgram $bot)
     {
-        $request->validate([
-            'name' => 'required',
-            'phone' => 'required',
-            'address' => 'required',
-            'dishes' => 'array',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string',
+            'note' => 'nullable|string',
+            'dishes' => 'required|array',
+            'dishes.*' => 'array',
+            'dishes.*.*' => 'integer|exists:dishes,id',
         ]);
-        $order = Order::create($request->merge(['total' => 35])->only(['name', 'phone', 'address', 'note', 'total']));
-        $order->status = 'pending';
-        $order->save();
-        $order->dishes()->sync($request->dishes);
 
-        $dishNames = $order->dishes->pluck('name')->toArray();
-        $message = "*\\[Đơn hàng mới\\]*\n"
-            .'*Tên:* `'.$this->escapeMarkdownV2($order->name)."`\n"
-            .'*SĐT:* `'.$this->escapeMarkdownV2($order->phone)."`\n"
-            .'*Địa chỉ:* `'.$this->escapeMarkdownV2($order->address)."`\n"
-            .'*Ghi chú:* '.($order->note ? $this->escapeMarkdownV2($order->note) : '_Không có_')."\n"
-            ."*Món đã đặt:*\n"
-            .implode("\n", array_map(fn ($i, $name) => ($i + 1).'\\. '.$name, array_keys($dishNames), $dishNames))."\n"
-            .'*Trạng thái:* `'.$this->escapeMarkdownV2($order->status).'`';
+        DB::beginTransaction();
+        try {
+            $order = Order::create([
+                'name' => $validated['name'],
+                'phone' => $validated['phone'],
+                'address' => $validated['address'],
+                'note' => $validated['note'] ?? '',
+                'status' => 'pending',
+                'total' => 35 * count($validated['dishes']),
+            ]);
+            $allDishIds = collect($validated['dishes'])->flatten()->unique()->values()->all();
+            $order->dishes()->sync($allDishIds);
 
-        $bot->sendMessage(
-            text: $message,
-            chat_id: env('TELEGRAM_CHAT_ID'),
-            parse_mode: ParseMode::MARKDOWN,
-        );
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Đơn hàng đã được gửi thành công',
-            'orderId' => $order->id,
-        ], 200);
+            $menu = [];
+            $message = [];
+            $message[] = '*[ĐƠN HÀNG MỚI]*';
+            $message[] = '*Tên:* `'.$this->escapeMarkdownV2($order->name).'`';
+            $message[] = '*SĐT:* `'.$this->escapeMarkdownV2($order->phone).'`';
+            $message[] = '*Địa chỉ:* `'.$this->escapeMarkdownV2($order->address).'`';
+            $message[] = '*Ghi chú:* `'.$this->escapeMarkdownV2($order->note).'`';
+            $message[] = '*Trạng thái:* `'.$this->escapeMarkdownV2($order->status).'`';
+            foreach ($validated['dishes'] as $index => $id) {
+                $name = Dish::whereIn('id', $id)->pluck('name')->toArray();
+                $formattedDishes = implode(', ', $name);
+                $message[] = "*Suất " . ($index + 1) . ":* " . $formattedDishes;
+                $menu[] = "Suất " . ($index + 1) . ": " . $formattedDishes;
+            }
+            $bot->sendMessage(
+                text: implode("\n", $message),
+                chat_id: env('TELEGRAM_CHAT_ID'),
+                parse_mode: ParseMode::MARKDOWN,
+            );
+
+            $order->menu = implode("\n", $menu);
+            $order->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đặt hàng thành công',
+                'orderId' => $order->id,
+            ], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['error' => 'Lỗi khi đặt hàng: ' . $th->getMessage()], 500);
+        }
     }
 
     /**

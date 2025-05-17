@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('address');
             $table->string('note')->nullable();
             $table->decimal('total');
+            $table->string('menu')->nullable();
             $table->string('status')->default('pending');
             $table->timestamps();
         });
