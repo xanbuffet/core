@@ -73,14 +73,10 @@ class OrderController extends Controller
             foreach ($validated['dishes'] as $index => $id) {
                 $name = Dish::whereIn('id', $id)->pluck('name')->toArray();
                 $formattedDishes = implode(', ', $name);
-                $message[] = "*Suất " . ($index + 1) . ":* " . $formattedDishes;
-                $menu[] = "Suất " . ($index + 1) . ": " . $formattedDishes;
+                $message[] = '*Suất '.($index + 1).':* '.$formattedDishes;
+                $menu[] = 'Suất '.($index + 1).': '.$formattedDishes;
             }
-            $bot->sendMessage(
-                text: implode("\n", $message),
-                chat_id: env('TELEGRAM_CHAT_ID'),
-                parse_mode: ParseMode::MARKDOWN,
-            );
+            $bot->sendMessage(implode("\n", $message), env('TELEGRAM_CHAT_ID'), null, ParseMode::MARKDOWN);
 
             $order->menu = implode("\n", $menu);
             $order->save();
@@ -92,7 +88,8 @@ class OrderController extends Controller
             ], 200);
         } catch (\Throwable $th) {
             DB::rollBack();
-            return response()->json(['error' => 'Lỗi khi đặt hàng: ' . $th->getMessage()], 500);
+
+            return response()->json(['error' => 'Lỗi khi đặt hàng: '.$th->getMessage()], 500);
         }
     }
 
