@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('dish_order', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('dish_id')->constrained()->onDelete('cascade');
-            $table->foreignId('order_id')->constrained()->onDelete('cascade');
+            $table->foreignId('dish_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->unsignedInteger('meal_number');
             $table->timestamps();
         });
     }

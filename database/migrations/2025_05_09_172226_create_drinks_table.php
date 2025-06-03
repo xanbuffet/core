@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('drinks', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->string('image')->nullable();
             $table->decimal('price');
             $table->timestamps();

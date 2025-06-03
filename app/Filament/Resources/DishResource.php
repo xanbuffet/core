@@ -28,6 +28,7 @@ class DishResource extends Resource
                     ->maxLength(255),
                 Forms\Components\FileUpload::make('image')
                     ->image()
+                    ->nullable()
                     ->imageEditor()
                     ->downloadable()
                     ->getUploadedFileNameForStorageUsing(function ($file) {

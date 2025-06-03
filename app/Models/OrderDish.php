@@ -2,16 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class OrderDish extends Model
 {
-    use HasFactory;
-
     protected $table = 'dish_order';
-
-    public $timestamps = false;
 
     public function dish()
     {
