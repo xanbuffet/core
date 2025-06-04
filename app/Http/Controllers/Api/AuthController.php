@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // Xác thực dữ liệu đầu vào
         $validator = Validator::make($request->all(), [
             'username' => 'required|regex:/^[0-9]{10}$/',
             'password' => 'required|string|min:6',
@@ -23,38 +24,67 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'statusCode' => 400,
-                'message' => 'Dữ liệu không hợp lệ',
-                'errors' => $validator->errors(),
-            ], 400);
+            return response()->json(['message' => $validator->errors()->first()], 422);
         }
 
-        // Kiểm tra thông tin đăng nhập
-        $credentials = [
-            'username' => $request->username, // Giả sử cột trong DB là 'phone'
-            'password' => $request->password,
-        ];
+        $credentials = $request->only('username', 'password');
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            // Tạo token (nếu sử dụng Sanctum hoặc Passport)
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
-                'statusCode' => 200,
                 'message' => 'Đăng nhập thành công',
                 'data' => [
+                    'name' => $user->name,
                     'username' => $user->username,
                     'is_admin' => $user->is_admin,
                     'token' => $token,
+                    'address' => $user->address,
                 ],
             ], 200);
         }
 
+        return response()->json(['message' => 'Số điện thoại hoặc mật khẩu không đúng'], 401);
+    }
+
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|unique:users,username|regex:/^[0-9]{10}$/',
+            'password' => 'required|string|min:6|confirmed',
+        ], [
+            'name.required' => 'Vui lòng cung cấp tên của bạn.',
+            'username.required' => 'Vui lòng cung cấp số điện thoại.',
+            'username.regex' => 'Số điện thoại phải có 10 chữ số.',
+            'password.required' => 'Vui lòng cung cấp mật khẩu.',
+            'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()->first()], 422);
+        }
+
+        $user = User::create([
+            'name' => Str::ucfirst($request->name),
+            'username' => $request->username,
+            'password' => $request->password,
+            'is_admin' => false,
+            'address' => null
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
-            'statusCode' => 401,
-            'message' => 'Số điện thoại hoặc mật khẩu không đúng',
-        ], 401);
+            'message' => 'Đăng ký thành công',
+            'data' => [
+                'name' => $user->name,
+                'username' => $user->username,
+                'is_admin' => $user->is_admin,
+                'token' => $token,
+                'address' => $user->address
+            ],
+        ], 201);
     }
 }
