@@ -108,7 +108,7 @@ class DishFactory extends Factory
 
         return [
             'name' => fake()->unique()->randomElement($dishes),
-            'image' => '/storage/dishes/xan_dish404.webp',
+            'image' => 'dishes/xan_dish404.webp',
         ];
     }
 }
