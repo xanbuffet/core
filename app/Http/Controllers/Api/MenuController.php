@@ -52,33 +52,32 @@ class MenuController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $day)
     {
-        $dayOfWeek = strtolower($id);
-        $validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        if (! in_array($dayOfWeek, $validDays)) {
+        $day_of_week = strtolower($day);
+        $valid_days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+        if (!in_array($day_of_week, $valid_days)) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Thứ không hợp lệ. Vui lòng nhập một trong các giá trị: '.implode(', ', $validDays),
+                'message' => 'Thứ không hợp lệ. Vui lòng dùng: ' . implode(', ', $valid_days),
             ], 400);
         }
 
-        $cache_key = 'xan.api.menu.'.$dayOfWeek;
-        $menu = Cache::remember($cache_key, now()->addHours(8), function () use ($dayOfWeek) {
-            return Menu::with('dishes')->where('day_of_week', $dayOfWeek)->first();
-        });
+        $cache_key = 'xan.api.menu.'.$day_of_week;
+
+        $menu = Cache::remember($cache_key, now()->addHours(8), fn () =>
+            Menu::with('dishes')
+                ->where('day_of_week', $day_of_week)
+                ->first()?->toResource()
+        );
 
         if (! $menu) {
             return response()->json([
-                'status' => 'error',
-                'message' => "Không tìm thấy thực đơn cho thứ {$dayOfWeek}",
+                'message' => "Không tìm thấy menu cho {$day_of_week}",
             ], 404);
         }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $menu,
-        ]);
+        return $menu;
     }
 
     /**
