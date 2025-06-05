@@ -19,7 +19,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://xanbuffet.com', 'https://xanbuffet.com', 'http://localhost:5173', 'http://localhost:3000', 'http://fe.xanbuffet.test:3000'],
+    'allowed_origins' => [
+        'http://xanbuffet.com',
+        'https://xanbuffet.com',
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://fe.xanbuffet.test:3000',
+    ],
 
     'allowed_origins_patterns' => [],
 
