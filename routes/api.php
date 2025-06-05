@@ -11,8 +11,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/menu', [MenuController::class, 'index']);
-Route::get('/menu/{id}', [MenuController::class, 'show']);
+/* == Menu routes == */
+Route::get('/menus', [MenuController::class, 'index']);
+Route::get('/menus/{day}', [MenuController::class, 'show']);
 
 Route::get('/orders/{id}', [OrderController::class, 'show']);
 Route::post('/orders', [OrderController::class, 'store']);
