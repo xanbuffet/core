@@ -36,11 +36,11 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Đăng nhập thành công',
                 'data' => [
+                    'id' => $user->id,
                     'name' => $user->name,
                     'username' => $user->username,
-                    'is_admin' => $user->is_admin,
-                    'token' => $token,
                     'address' => $user->address,
+                    'token' => $token,
                 ],
             ], 200);
         }
@@ -79,11 +79,11 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Đăng ký thành công',
             'data' => [
+                'id' => $user->id,
                 'name' => $user->name,
                 'username' => $user->username,
-                'is_admin' => $user->is_admin,
+                'address' => $user->address,
                 'token' => $token,
-                'address' => $user->address
             ],
         ], 201);
     }
