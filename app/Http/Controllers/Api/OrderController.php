@@ -27,7 +27,8 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
-            'address' => 'nullable|string|max:255',
+            'address' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:255',
             'dishes' => 'required|array|min:1',
             'dishes.*' => 'required|array|min:1',
             'dishes.*.*' => 'required|exists:dishes,id',
@@ -43,7 +44,7 @@ class OrderController extends Controller
             $order = Order::create([
                 'user_id' => $request->user_id,
                 'address' => $request->address,
-                'notes' => $request->note,
+                'notes' => $request->notes,
                 'status' => 'pending',
                 'total_price' => 35000 * count($request->dishes)
             ]);
