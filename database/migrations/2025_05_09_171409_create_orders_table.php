@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->cascadeOnDelete();
             $table->decimal('total_price')->default(0.00);
             $table->text('notes')->nullable();
+            $table->text('address')->nullable();
             $table->string('status', 30)->default('pending');
             $table->timestamps();
         });
