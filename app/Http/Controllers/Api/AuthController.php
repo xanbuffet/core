@@ -31,7 +31,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $request->session()->regenerate();
 
             return response()->json([
                 'message' => 'Đăng nhập thành công',
@@ -40,7 +40,6 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'username' => $user->username,
                     'address' => $user->address,
-                    'token' => $token,
                 ],
             ], 200);
         }
@@ -71,10 +70,10 @@ class AuthController extends Controller
             'username' => $request->username,
             'password' => $request->password,
             'is_admin' => false,
-            'address' => null
+            'address' => null,
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $request->session()->regenerate();
 
         return response()->json([
             'message' => 'Đăng ký thành công',
@@ -83,8 +82,17 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'username' => $user->username,
                 'address' => $user->address,
-                'token' => $token,
             ],
         ], 201);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json(['message' => 'Đăng xuất thành công'], 200);
     }
 }

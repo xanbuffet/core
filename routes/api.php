@@ -15,7 +15,11 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/menus/{day}', [MenuController::class, 'show']);
 
-Route::get('/orders/{id}', [OrderController::class, 'show']);
-Route::post('/orders', [OrderController::class, 'store']);
+Route::middleware('auth:sanctum')->group(function() {
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders', [OrderController::class, 'store']);
+});
 
 Route::post('/webhook', WebhookController::class);
