@@ -17,13 +17,10 @@ Route::resource('menus', MenuController::class)->only(['index', 'show']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::resource('users', UserController::class)->only([
-        'index', 'show', 'update', 'destroy',
-    ]);
+    Route::post('users/{user}/password_change', [UserController::class, 'updatePassword']);
+    Route::apiResource('users', UserController::class);
 
-    Route::resource('orders', OrderController::class)->only([
-        'show', 'store', 'update', 'destroy',
-    ]);
+    Route::apiResource('orders', OrderController::class);
 });
 
 Route::post('/webhook', WebhookController::class);
