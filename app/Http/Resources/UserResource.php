@@ -20,6 +20,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'username' => $this->username,
             'address' => $this->address,
+            'orders_count' => $this->whenCounted('orders'),
         ];
     }
 }

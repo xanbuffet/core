@@ -7,6 +7,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -75,6 +76,54 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Không thể cập nhật thông tin người dùng.',
                 'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Update the user password.
+     */
+    public function updatePassword(Request $request, User $user)
+    {
+        $validator = Validator::make($request->all(), [
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'current_password.required' => 'Mật khẩu hiện tại là bắt buộc.',
+            'new_password.required' => 'Mật khẩu mới là bắt buộc.',
+            'new_password.min' => 'Mật khẩu mới phải có ít nhất 8 ký tự.',
+            'new_password.confirmed' => 'Xác nhận mật khẩu mới không khớp.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        if (Auth::id() !== $user->id) {
+            return response()->json([
+                'message' => 'Bạn không có quyền cập nhật mật khẩu của người dùng này.',
+            ], 403);
+        }
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Mật khẩu hiện tại không đúng.',
+            ], 422);
+        }
+
+        try {
+            $user->update([
+                'password' => $request->new_password,
+            ]);
+
+            return response()->json([
+                'message' => 'Cập nhật mật khẩu thành công!',
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
             ], 500);
         }
     }
