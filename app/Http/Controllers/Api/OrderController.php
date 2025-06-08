@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use SergiX44\Nutgram\Nutgram;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -42,6 +44,7 @@ class OrderController extends Controller
 
         try {
             $order = Order::create([
+                'order_no' => $this->genOrderNumber(),
                 'user_id' => $request->user_id,
                 'address' => $request->address,
                 'notes' => $request->notes,
@@ -64,7 +67,7 @@ class OrderController extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Order created successfully',
+                'message' => 'Tạo đơn hàng thành công',
                 'order' => $order->load('dishes')
             ], 201);
 
@@ -80,35 +83,18 @@ class OrderController extends Controller
      */
     public function show(string $id)
     {
-        $order = Cache::remember("xan.api.order.{$id}", now()->addMinutes(10), function () use ($id) {
-            $order = Order::find($id);
+        $order = Order::where('id', $id)->where('user_id', Auth::guard('web')->id())->first();
 
-            if ($order) {
-                $order->load('dishes');
-            }
-
-            return $order;
-        });
-
-        if (! $order) {
+        if (!$order) {
             return response()->json([
-                'success' => false,
-                'message' => 'Đơn hàng không tồn tại',
+                'message' => 'Không tìm thấy đơn hàng hoặc bạn không có quyền truy cập!',
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
-            'order' => $order,
+            'message' => 'Lấy thông tin đơn hàng thành công!',
+            'order' => $order->load('dishes'),
         ], 200);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     /**
@@ -119,11 +105,13 @@ class OrderController extends Controller
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    private function genOrderNumber()
     {
-        //
+        do {
+            $random = Str::random(8);
+            $orderNo = 'XAN_' . $random;
+        } while (Order::where('order_no', $orderNo)->exists());
+
+        return $orderNo;
     }
 }
