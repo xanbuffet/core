@@ -18,7 +18,12 @@ class Menu extends Model
     protected static function booted(): void
     {
         static::updated(function (Menu $menu) {
-            Cache::forget('xan.api.menu.' . $menu->day_of_week);
+            Cache::forget('xan.api.menu.'.$menu->day_of_week);
         });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'day_of_week';
     }
 }

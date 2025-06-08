@@ -40,6 +40,11 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function getAuthIdentifierName()
     {
         return 'username';
