@@ -57,8 +57,10 @@ class AuthController extends Controller
             'name.required' => 'Vui lòng cung cấp tên của bạn.',
             'username.required' => 'Vui lòng cung cấp số điện thoại.',
             'username.regex' => 'Số điện thoại phải có 10 chữ số.',
+            'username.unique' => 'Số điện thoại đã được sử dụng.',
             'password.required' => 'Vui lòng cung cấp mật khẩu.',
             'password.min' => 'Mật khẩu phải có ít nhất 6 ký tự.',
+            'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
         ]);
 
         if ($validator->fails()) {
