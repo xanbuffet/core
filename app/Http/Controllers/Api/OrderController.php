@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use SergiX44\Nutgram\Nutgram;
@@ -19,7 +19,8 @@ class OrderController extends Controller
      */
     public function index()
     {
-        //
+        $orders = Order::with('dishes')->get();
+        return OrderResource::collection($orders);
     }
 
     /**
@@ -81,19 +82,16 @@ class OrderController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Order $order)
     {
-        $order = Order::where('id', $id)->where('user_id', Auth::guard('web')->id())->first();
-
-        if (!$order) {
+        if ($order->user_id != Auth::id()) {
             return response()->json([
-                'message' => 'Không tìm thấy đơn hàng hoặc bạn không có quyền truy cập!',
-            ], 404);
+                'message' => 'Bạn không có quyền truy cập!',
+            ], 403);
         }
 
         return response()->json([
-            'message' => 'Lấy thông tin đơn hàng thành công!',
-            'order' => $order->load('dishes'),
+            $order->load('dishes')->toResource(),
         ], 200);
     }
 
