@@ -7,20 +7,18 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
-/* == Auth routes == */
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-/* == Menu routes == */
 Route::resource('menus', MenuController::class)->only(['index', 'show']);
+
+Route::apiResource('orders', OrderController::class);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::post('users/{user}/password_change', [UserController::class, 'updatePassword']);
     Route::apiResource('users', UserController::class);
-
-    Route::apiResource('orders', OrderController::class);
 });
 
 Route::post('/webhook', WebhookController::class);

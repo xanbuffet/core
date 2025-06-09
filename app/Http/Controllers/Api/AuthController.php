@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -74,6 +75,9 @@ class AuthController extends Controller
             'is_admin' => false,
             'address' => null,
         ]);
+
+        // Chuyển đổi Guest user sang User
+        Order::where('guest_phone', $user->username)->update(['user_id' => $user->id]);
 
         $request->session()->regenerate();
 

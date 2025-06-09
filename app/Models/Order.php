@@ -12,6 +12,11 @@ class Order extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function isGuestOrder()
+    {
+        return is_null($this->user_id);
+    }
+
     public function dishes()
     {
         return $this->belongsToMany(Dish::class)
@@ -29,6 +34,23 @@ class Order extends Model
     public function orderDishes()
     {
         return $this->hasMany(OrderDish::class);
+    }
+
+    public function getCustomerInfo()
+    {
+        if ($this->isGuestOrder()) {
+            return [
+                'name' => $this->guest_name,
+                'phone' => $this->guest_phone,
+                'address' => $this->address,
+            ];
+        }
+
+        return [
+            'name' => $this->user->name,
+            'phone' => $this->user->username,
+            'address' => $this->user->address,
+        ];
     }
 
     public function getMealCountAttribute()

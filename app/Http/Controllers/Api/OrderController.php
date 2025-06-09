@@ -28,14 +28,22 @@ class OrderController extends Controller
      */
     public function store(Request $request, Nutgram $bot)
     {
-        $validator = Validator::make($request->all(), [
-            'user_id' => 'required|exists:users,id',
-            'address' => 'required|string|max:255',
+        $rules = [
+            'address' => 'required|string|min:10|max:255',
             'notes' => 'nullable|string|max:255',
             'dishes' => 'required|array|min:1',
             'dishes.*' => 'required|array|min:1',
             'dishes.*.*' => 'required|exists:dishes,id',
-        ]);
+        ];
+
+        if (!Auth::check()) {
+            $rules = array_merge($rules, [
+                'guest_name' => 'required|string|min:2',
+                'guest_phone' => 'required|string|regex:/^[0-9]{10}$/',
+            ]);
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()->first()], 422);
@@ -46,15 +54,16 @@ class OrderController extends Controller
         try {
             $order = Order::create([
                 'order_no' => $this->genOrderNumber(),
-                'user_id' => $request->user_id,
+                'user_id' => Auth::check() ? Auth::id() : null,
+                'guest_name' => $request->guest_name,
+                'guest_phone' => $request->guest_phone,
                 'address' => $request->address,
                 'notes' => $request->notes,
                 'status' => 'pending',
-                'total_price' => 35000 * count($request->dishes)
+                'total_price' => 35000 * count($request->dishes),
             ]);
 
             $pivotData = [];
-
             foreach ($request->dishes as $mealIndex => $dishIds) {
                 $mealNumber = $mealIndex + 1;
 
@@ -62,7 +71,6 @@ class OrderController extends Controller
                     $pivotData[$dishId] = ['meal_number' => $mealNumber];
                 }
             }
-
             $order->dishes()->sync($pivotData);
 
             DB::commit();

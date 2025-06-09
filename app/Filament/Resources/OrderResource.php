@@ -25,8 +25,28 @@ class OrderResource extends Resource
                 Forms\Components\Select::make('user_id')
                     ->label('Khách hàng')
                     ->relationship('user', 'username')
-                    ->required()
-                    ->searchable(),
+                    ->nullable()
+                    ->searchable()
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if (!$state) {
+                            $set('guest_name', null);
+                            $set('guest_phone', null);
+                        }
+                    }),
+                Forms\Components\TextInput::make('guest_name')
+                    ->label('Tên khách vãng lai')
+                    ->required(fn ($get) => !$get('user_id'))
+                    ->maxLength(255)
+                    ->visible(fn ($get) => !$get('user_id'))
+                    ->dehydrated(fn ($get) => !$get('user_id')),
+                Forms\Components\TextInput::make('guest_phone')
+                    ->label('Số điện thoại khách vãng lai')
+                    ->required(fn ($get) => !$get('user_id'))
+                    ->maxLength(20)
+                    ->regex('/^\d{8,11}$/')
+                    ->visible(fn ($get) => !$get('user_id'))
+                    ->dehydrated(fn ($get) => !$get('user_id')),
                 Forms\Components\TextInput::make('order_no')
                     ->label('Mã đơn hàng')
                     ->required()
@@ -88,9 +108,20 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('order_no')
                     ->label('Mã đơn hàng')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('user.name')
+                Tables\Columns\TextColumn::make('customer_info')
                     ->label('Khách hàng')
-                    ->searchable(),
+                    ->getStateUsing(function (Order $record) {
+                        return $record->user_id ? $record->user->username : ($record->guest_name ?: $record->guest_phone);
+                    })
+                    ->searchable(query: function ($query, $search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->whereHas('user', function ($q) use ($search) {
+                                $q->where('username', 'like', "%{$search}%");
+                            })
+                            ->orWhere('guest_name', 'like', "%{$search}%")
+                            ->orWhere('guest_phone', 'like', "%{$search}%");
+                        });
+                    }),
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Tổng tiền')
                     ->money('VND')
@@ -170,6 +201,43 @@ class OrderResource extends Resource
                                     ->send();
                             }
                         }),
+                    Tables\Actions\Action::make('convert_to_user')
+                        ->label('Chuyển thành tài khoản')
+                        ->icon('heroicon-o-user-plus')
+                        ->color('success')
+                        ->form([
+                            Forms\Components\Select::make('user_id')
+                                ->label('Chọn tài khoản')
+                                ->relationship('user', 'username')
+                                ->required()
+                                ->searchable(),
+                        ])
+                        ->requiresConfirmation()
+                        ->modalHeading('Chuyển đơn hàng sang tài khoản')
+                        ->modalDescription('Chọn tài khoản để liên kết với đơn hàng này.')
+                        ->modalSubmitActionLabel('Chuyển')
+                        ->action(function (Order $record, array $data) {
+                            try {
+                                $record->update([
+                                    'user_id' => $data['user_id'],
+                                    'guest_name' => null,
+                                    'guest_phone' => null,
+                                    'guest_address' => null,
+                                ]);
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Chuyển thành công')
+                                    ->body('Đơn hàng đã được liên kết với tài khoản.')
+                                    ->success()
+                                    ->send();
+                            } catch (\Exception $e) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Lỗi')
+                                    ->body('Không thể chuyển đơn hàng: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn (Order $record) => $record->isGuestOrder()),
                     Tables\Actions\DeleteAction::make(),
                 ])
             ])

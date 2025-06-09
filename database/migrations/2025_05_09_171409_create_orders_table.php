@@ -14,10 +14,12 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_no', 20)->unique();
-            $table->foreignId('user_id')->cascadeOnDelete();
-            $table->decimal('total_price')->default(0.00);
-            $table->text('notes')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->string('guest_name')->nullable();
+            $table->string('guest_phone')->nullable();
             $table->text('address')->nullable();
+            $table->text('notes')->nullable();
+            $table->decimal('total_price')->default(0.00);
             $table->string('status', 30)->default('pending');
             $table->timestamps();
         });
