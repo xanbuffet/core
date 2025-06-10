@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -23,7 +23,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Chưa xác thực.'], 401);
         }
 
-        return new UserResource($user);
+        return $user->loadCount('orders')->toResource();
     }
 
     /**
@@ -38,7 +38,12 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'regex:/^[0-9]{10}$/', 'unique:users,username,'.$user->username],
+            'username' => [
+                'required',
+                'string',
+                'regex:/^[0-9]{10}$/',
+                Rule::unique('users')->ignore($user->id),
+            ],
             'address' => ['nullable', 'string', 'max:255'],
         ], [
             'name.required' => 'Tên là bắt buộc.',
@@ -55,7 +60,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        if (Auth::id() !== $user->id) {
+        if (Auth::id() !== $user->getAuthIdentifier()) {
             return response()->json([
                 'message' => 'Bạn không có quyền cập nhật thông tin người dùng này.',
             ], 403);
@@ -70,7 +75,7 @@ class UserController extends Controller
 
             return response()->json([
                 'message' => 'Cập nhật thông tin người dùng thành công!',
-                'user' => $user,
+                'data' => $user->loadCount('orders')->toResource(),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -101,13 +106,13 @@ class UserController extends Controller
             ], 422);
         }
 
-        if (Auth::id() !== $user->id) {
+        if (Auth::id() !== $user->getAuthIdentifier()) {
             return response()->json([
                 'message' => 'Bạn không có quyền cập nhật mật khẩu của người dùng này.',
             ], 403);
         }
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'message' => 'Mật khẩu hiện tại không đúng.',
             ], 422);
@@ -123,7 +128,7 @@ class UserController extends Controller
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

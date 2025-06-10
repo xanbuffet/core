@@ -36,7 +36,7 @@ class OrderController extends Controller
             'dishes.*.*' => 'required|exists:dishes,id',
         ];
 
-        if (!Auth::check()) {
+        if ($request->has("type") && $request->type == "guest") {
             $rules = array_merge($rules, [
                 'guest_name' => 'required|string|min:2',
                 'guest_phone' => 'required|string|regex:/^[0-9]{10}$/',
@@ -54,7 +54,7 @@ class OrderController extends Controller
         try {
             $order = Order::create([
                 'order_no' => $this->genOrderNumber(),
-                'user_id' => Auth::check() ? Auth::id() : null,
+                'user_id' => Auth::guard('web')->check() ? Auth::guard('web')->id() : null,
                 'guest_name' => $request->guest_name,
                 'guest_phone' => $request->guest_phone,
                 'address' => $request->address,
@@ -77,7 +77,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Tạo đơn hàng thành công',
-                'order' => $order->load('dishes')
+                'order' => $order->load('dishes')->toResource()
             ], 201);
 
         } catch (\Throwable $th) {

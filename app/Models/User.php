@@ -50,6 +50,11 @@ class User extends Authenticatable implements FilamentUser
         return 'username';
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'username';
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->is_admin == true;

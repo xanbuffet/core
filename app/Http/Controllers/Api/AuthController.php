@@ -36,12 +36,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Đăng nhập thành công',
-                'data' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'username' => $user->username,
-                    'address' => $user->address,
-                ],
+                'data' => $user->loadCount('orders')->toResource(),
             ], 200);
         }
 
@@ -83,12 +78,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Đăng ký thành công',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'address' => $user->address,
-            ],
+            'data' => $user->loadCount('orders')->toResource(),
         ], 201);
     }
 
