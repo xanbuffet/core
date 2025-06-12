@@ -12,6 +12,7 @@ Route::post('/register', [AuthController::class, 'register']);
 
 Route::resource('menus', MenuController::class)->only(['index', 'show']);
 
+Route::post('tracking', [OrderController::class, 'tracking']);
 Route::apiResource('orders', OrderController::class);
 
 Route::middleware('auth:sanctum')->group(function () {

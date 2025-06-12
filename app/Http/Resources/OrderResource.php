@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class OrderResource extends JsonResource
 {
@@ -27,9 +28,14 @@ class OrderResource extends JsonResource
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
             'dishes' => $this->dishes->map(function ($dish) {
+                $image_url = null;
+                if (Storage::disk('public')->exists($dish->image)) {
+                    $image_url = Storage::disk('public')->url($dish->image);
+                }
                 return [
                     'id' => $dish->id,
                     'name' => $dish->name,
+                    'image' => $image_url,
                     'meal_number' => $dish->pivot->meal_number,
                 ];
             })->toArray(),
