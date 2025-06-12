@@ -54,7 +54,7 @@ class OrderController extends Controller
         try {
             $order = Order::create([
                 'order_no' => $this->genOrderNumber(),
-                'user_id' => Auth::guard('web')->check() ? Auth::guard('web')->id() : null,
+                'user_id' => $request->type == 'user' ? Auth::user()->id : null,
                 'guest_name' => $request->guest_name,
                 'guest_phone' => $request->guest_phone,
                 'address' => $request->address,
