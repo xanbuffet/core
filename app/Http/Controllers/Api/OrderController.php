@@ -21,7 +21,7 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::with('dishes')->get();
-        return OrderResource::collection($orders);
+        return $orders->toResourceCollection();
     }
 
     /**
@@ -158,15 +158,16 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Tra cứu đơn hàng thành công.',
-            'order' => $order->toResource(),
+            'order' => [$order->toResource()],
         ], 200);
     }
 
     private function genOrderNumber()
     {
         do {
-            $random = Str::random(8);
-            $orderNo = 'XAN_' . $random;
+            $date = now()->format('dm');
+            $random = Str::random(2);
+            $orderNo = 'XAN_' . $date . $random;
         } while (Order::where('order_no', $orderNo)->exists());
 
         return $orderNo;
