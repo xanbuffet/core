@@ -20,8 +20,13 @@ class OrderController extends Controller
      */
     public function index()
     {
-        $orders = Order::with('dishes')->get();
-        return $orders->toResourceCollection();
+        $user_id = Auth::user()->id;
+
+        $orders = Order::with('dishes')
+            ->where('user_id', $user_id)
+            ->latest()->get();
+
+        return OrderResource::collection($orders);
     }
 
     /**
@@ -78,7 +83,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => 'Tạo đơn hàng thành công',
-                'order' => $order->load('dishes')->toResource()
+                'data' => $order->load(['dishes', 'user'])->toResource()
             ], 201);
 
         } catch (\Throwable $th) {
@@ -93,15 +98,13 @@ class OrderController extends Controller
      */
     public function show(Order $order)
     {
-        if ($order->user_id != Auth::id()) {
+        if ($order->user_id != Auth::user()->id) {
             return response()->json([
                 'message' => 'Bạn không có quyền truy cập!',
             ], 403);
         }
 
-        return response()->json([
-            $order->load('dishes')->toResource(),
-        ], 200);
+        return $order->load('dishes')->toResource();
     }
 
     /**
@@ -158,7 +161,7 @@ class OrderController extends Controller
 
         return response()->json([
             'message' => 'Tra cứu đơn hàng thành công.',
-            'order' => [$order->toResource()],
+            'data' => $order->toResource(),
         ], 200);
     }
 
@@ -167,7 +170,7 @@ class OrderController extends Controller
         do {
             $date = now()->format('dm');
             $random = Str::random(2);
-            $orderNo = 'XAN_' . $date . $random;
+            $orderNo = 'XAN_' . $date . Str::upper($random);
         } while (Order::where('order_no', $orderNo)->exists());
 
         return $orderNo;

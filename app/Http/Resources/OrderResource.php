@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderResource extends JsonResource
 {
+    public static $wrap = null;
+
     /**
      * Transform the resource into an array.
      *
@@ -39,6 +41,14 @@ class OrderResource extends JsonResource
                     'meal_number' => $dish->pivot->meal_number,
                 ];
             })->toArray(),
+            'user' => $this->when($this->relationLoaded('user') && $this->user, function () {
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'username' => $this->user->username,
+                    'address' => $this->user->address,
+                ];
+            }, null),
         ];
     }
 }

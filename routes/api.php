@@ -13,10 +13,12 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::resource('menus', MenuController::class)->only(['index', 'show']);
 
 Route::post('tracking', [OrderController::class, 'tracking']);
-Route::apiResource('orders', OrderController::class);
+Route::post('orders', [OrderController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::apiResource('orders', OrderController::class)->only('index', 'show');
 
     Route::post('users/{user}/password_change', [UserController::class, 'updatePassword']);
     Route::apiResource('users', UserController::class);
