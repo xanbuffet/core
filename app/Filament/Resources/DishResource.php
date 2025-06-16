@@ -31,6 +31,10 @@ class DishResource extends Resource
                     ->directory('dishes')
                     ->nullable()
                     ->imageEditor()
+                    ->imageEditorAspectRatios(['1:1'])
+                    ->circleCropper()
+                    ->imageEditorViewportHeight(800)
+                    ->imageEditorViewportWidth(800)
                     ->downloadable()
                     ->getUploadedFileNameForStorageUsing(function ($file) {
                         $random = Str::random(10);
