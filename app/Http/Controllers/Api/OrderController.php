@@ -4,14 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Mail\Admin\OrderCreated;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use SergiX44\Nutgram\Nutgram;
 use Illuminate\Support\Str;
+use SergiX44\Nutgram\Nutgram;
 
 class OrderController extends Controller
 {
@@ -42,7 +44,7 @@ class OrderController extends Controller
             'dishes.*.*' => 'required|exists:dishes,id',
         ];
 
-        if ($request->has("type") && $request->type == "guest") {
+        if ($request->has('type') && $request->type == 'guest') {
             $rules = array_merge($rules, [
                 'guest_name' => 'required|string|min:2',
                 'guest_phone' => 'required|string|regex:/^[0-9]{10}$/',
@@ -81,9 +83,12 @@ class OrderController extends Controller
 
             DB::commit();
 
+            $data = $order->load(['dishes', 'user']);
+            Mail::to('')->queue(new OrderCreated($data));
+
             return response()->json([
                 'message' => 'Tạo đơn hàng thành công',
-                'data' => $order->load(['dishes', 'user'])->toResource()
+                'data' => $data->toResource(),
             ], 201);
 
         } catch (\Throwable $th) {
@@ -135,7 +140,7 @@ class OrderController extends Controller
             ->where('order_no', $request->order_no)
             ->first();
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'message' => 'Không tìm thấy đơn hàng với mã này.',
             ], 404);
@@ -146,7 +151,7 @@ class OrderController extends Controller
                 ->where('username', $request->username)
                 ->first();
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
                     'message' => 'Số điện thoại không khớp với đơn hàng.',
                 ], 403);
@@ -170,7 +175,7 @@ class OrderController extends Controller
         do {
             $date = now()->format('dm');
             $random = Str::random(2);
-            $orderNo = 'XAN_' . $date . Str::upper($random);
+            $orderNo = 'XAN_'.$date.Str::upper($random);
         } while (Order::where('order_no', $orderNo)->exists());
 
         return $orderNo;
