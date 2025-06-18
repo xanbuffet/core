@@ -16,7 +16,7 @@ class DishResource extends JsonResource
     public function toArray(Request $request): array
     {
         $image_url = null;
-        if (Storage::disk('public')->exists($this->image)) {
+        if ($this->image && Storage::disk('public')->exists($this->image)) {
             $image_url = Storage::disk('public')->url($this->image);
         }
 
